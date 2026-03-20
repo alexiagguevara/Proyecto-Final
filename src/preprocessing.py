@@ -12,7 +12,9 @@ def extract_green_channel(dataset):
             for img_dict in imgs:
                 # Extraemos el canal verde y guardamos junto al nombre
                 green_img = img_dict["image"][:, :, 1]
-                green_dataset[grupo][cond].append({"name": img_dict["name"], "image": green_img})
+                new_item = img_dict.copy()
+                new_item["image"] = green_img
+                green_dataset[grupo][cond].append(new_item)
     return green_dataset
 
 def check_image_ranges(dataset):
@@ -67,10 +69,10 @@ def normalize_dataset(dataset, robust=True):
 
                 norm = (img * 255).astype(np.uint8)
 
-                norm_dataset[group][cond].append({
-                    "name": entry["name"],
-                    "image": norm
-                })
+                new_item = entry.copy()
+                new_item["image"] = norm
+
+                norm_dataset[group][cond].append(new_item)
     return norm_dataset
 
 

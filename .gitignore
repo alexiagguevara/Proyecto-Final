@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.so
+.DS_Store
+
+# Large data directories (not pushed to GitHub)
+data/
+Features/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
