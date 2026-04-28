@@ -588,14 +588,15 @@ def predict_temporal_progression_score(img,
     }
 
     return {
-        "score": score,
+        "infalmmatory_score": score,
         "category": category,
         "warning": metadata["warning"],
         "score_features": temporal_features,
         "all_features": all_features,
         "wavelet": result["wavelet"],
         "mask": result["mask"],
-        "skeleton": result["skeleton"]
+        "skeleton": result["skeleton"],
+        "mode": "absolute_fallback"
     }
 
 # score relativo
