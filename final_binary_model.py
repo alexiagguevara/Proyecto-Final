@@ -177,20 +177,26 @@ def save_final_binary_model(df,
 
     return model, metadata
 
+from pathlib import Path
 
-def load_final_binary_model(model_path="final_binary_model.joblib",
-                            metadata_path="final_binary_model_metadata.joblib"):
+BASE_DIR = Path(__file__).resolve().parent
+
+def load_final_binary_model(model_path=None, metadata_path=None):
     """
     Carga modelo y metadata.
     """
+    if model_path is None:
+        model_path = BASE_DIR / "final_binary_model.joblib"
+    if metadata_path is None:
+        metadata_path = BASE_DIR / "final_binary_model_metadata.joblib"
+
     model = joblib.load(model_path)
     metadata = joblib.load(metadata_path)
     return model, metadata
 
-
 def predict_inflammatory_state(img,
-                               model_path="final_binary_model.joblib",
-                               metadata_path="final_binary_model_metadata.joblib",
+                               model_path=None,
+                               metadata_path=None,
                                q=80,
                                variant="closing_r3",
                                prune_iters=5):

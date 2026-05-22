@@ -504,8 +504,8 @@ def build_temporal_score_metadata(df):
         "task": "temporal_absolute_inflammatory_score",
         "calibration_level": "group_time",
         "warning": (
-            "Score calculado sin referencias del experimento actual. "
-            "La interpretación puede verse afectada por variabilidad biológica entre réplicas."
+            "This score was calculated without references from the current experiment. "
+            "Its interpretation may be affected by biological variability across replicates and differences in experimental setup."
         )
     }
 
@@ -524,17 +524,23 @@ def save_temporal_score_model(df,
     print(f"Temporal score metadata guardada en: {metadata_path}")
     return metadata
 
+from pathlib import Path
 
-def load_temporal_score_model(metadata_path="temporal_score_metadata.joblib"):
+BASE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = BASE_DIR.parent
+
+def load_temporal_score_model(metadata_path=None):
     """
     Carga la metadata del score temporal.
     """
+    if metadata_path is None:
+        metadata_path = PROJECT_ROOT / "temporal_score_metadata.joblib"
     metadata = joblib.load(metadata_path)
     return metadata
 
 
 def predict_temporal_progression_score(img,
-                                       metadata_path="temporal_score_metadata.joblib",
+                                       metadata_path=None,
                                        robust=True):
     """
     Calcula el score temporal absoluto para una imagen nueva.
@@ -588,7 +594,7 @@ def predict_temporal_progression_score(img,
     }
 
     return {
-        "infalmmatory_score": score,
+        "inflammatory_score": score,
         "category": category,
         "warning": metadata["warning"],
         "score_features": temporal_features,
@@ -639,7 +645,7 @@ def compute_reference_anchor_from_images(image_list, robust=True):
 def predict_temporal_progression_score_anchored(img_new,
                                                 ctrl_images,
                                                 inflam_images,
-                                                metadata_path="temporal_score_metadata.joblib",
+                                                metadata_path=None,
                                                 robust=True):
     """
     Calcula el score temporal relativo/anclado usando:
@@ -711,8 +717,8 @@ def predict_temporal_progression_score_anchored(img_new,
     recovery_category = get_recovery_category(recovery_score, recovery_thresholds)
 
     note = (
-        f"Score calculado usando {ctrl_anchor['n_images']} imágenes control y "
-        f"{inflam_anchor['n_images']} imágenes inflamadas del mismo experimento."
+        f"Score calculated using {ctrl_anchor['n_images']} control images and "
+        f"{inflam_anchor['n_images']} inflamed images from the same experiment."
     )
 
     return {

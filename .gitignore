@@ -1,3 +1,4 @@
+app_ui/.venv/
 __pycache__/
 *.py[cod]
 *.so
