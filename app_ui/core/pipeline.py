@@ -5,9 +5,13 @@ from pathlib import Path
 from typing import Optional
 import sys
 
+from paths import resource_path
 import numpy as np
 import tifffile
 
+CLASSIFIER_MODEL_PATH = resource_path("final_binary_model.joblib")
+CLASSIFIER_METADATA_PATH = resource_path("final_binary_model_metadata.joblib")
+TEMPORAL_METADATA_PATH = resource_path("temporal_score_metadata.joblib")
 
 # ── Make project root importable ─────────────────────────────────────────────
 # app_ui/core/pipeline.py  -> parents[2] = project root
@@ -120,7 +124,11 @@ def run_classifier(image_path: str) -> ClassifierResult:
     """
     img = _read_tif(image_path)
 
-    result = final_binary_model.predict_inflammatory_state(img)
+    result = final_binary_model.predict_inflammatory_state(
+        img, 
+        model_path=str(CLASSIFIER_MODEL_PATH),
+        metadata_path=str(CLASSIFIER_METADATA_PATH),
+    )
 
     pred_label = result.get("pred_label", "CTRL")
     prediction = _normalize_prediction_label(pred_label)
@@ -218,6 +226,7 @@ def run_progression_anchored(
         img_new=img,
         ctrl_images=ctrl_images,
         inflam_images=proinf_images,
+        metadata_path=str(TEMPORAL_METADATA_PATH),
     )
 
     score_features = result.get("score_features", {})
@@ -238,8 +247,8 @@ def run_progression_anchored(
         note=result.get(
             "note",
             (
-                f"Score calculado usando {len(ctrl_images)} imágenes control y "
-                f"{len(proinf_images)} imágenes inflamadas del mismo experimento."
+                f"Score calculated using {len(ctrl_images)} control images and "
+                f"{len(proinf_images)} inflamed images from the same experiment."
             ),
         ),
         warning="",
@@ -255,7 +264,10 @@ def run_progression_absolute(image_path: str) -> ProgressionResult:
     """
     img = _read_tif(image_path)
 
-    result = pipeline_temp.predict_temporal_progression_score(img)
+    result = pipeline_temp.predict_temporal_progression_score(
+        img,
+        metadata_path=str(TEMPORAL_METADATA_PATH),
+    )
 
     # Your current absolute backend may return "score" or "inflammatory_score".
     inflammatory_score = float(
@@ -281,8 +293,9 @@ def run_progression_absolute(image_path: str) -> ProgressionResult:
         warning=result.get(
             "warning",
             (
-                "Score calculado sin referencias del experimento actual. "
-                "La interpretación puede verse afectada por variabilidad biológica entre réplicas."
+                "This score was calculated without references from the current experiment. "
+                "Its interpretation may be affected by biological variability across replicates "
+                "and differences in experimental setup."
             ),
         ),
     )

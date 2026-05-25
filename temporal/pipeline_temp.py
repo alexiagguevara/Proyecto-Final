@@ -1,5 +1,6 @@
 import pandas as pd
 from pipeline import process_single_image
+from app_ui.paths import resource_path
 
 def build_temporal_feature_dataset(dataset,
                                    q=80,
@@ -524,17 +525,14 @@ def save_temporal_score_model(df,
     print(f"Temporal score metadata guardada en: {metadata_path}")
     return metadata
 
-from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent
 
 def load_temporal_score_model(metadata_path=None):
     """
     Carga la metadata del score temporal.
     """
     if metadata_path is None:
-        metadata_path = PROJECT_ROOT / "temporal_score_metadata.joblib"
+        metadata_path = resource_path("temporal_score_metadata.joblib")
     metadata = joblib.load(metadata_path)
     return metadata
 

@@ -10,3 +10,11 @@ Features/
 
 # Jupyter checkpoints
 .ipynb_checkpoints/
+
+build/
+dist/
+*.spec.bak
+__pycache__/
+*.pyc
+.DS_Store
+app_ui/data/

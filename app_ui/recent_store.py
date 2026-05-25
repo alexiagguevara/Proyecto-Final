@@ -5,18 +5,16 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from paths import user_data_dir, user_recent_dir, user_recent_json_path
 
 import numpy as np
 from PIL import Image
 
-BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
-DATA_DIR.mkdir(exist_ok=True)
+DATA_DIR = user_data_dir()
+ASSETS_DIR = user_recent_dir()
+RECENT_PATH = user_recent_json_path()
+BASE_DIR = DATA_DIR
 
-ASSETS_DIR = DATA_DIR / "recent_assets"
-ASSETS_DIR.mkdir(exist_ok=True)
-
-RECENT_PATH = DATA_DIR / "recent_analyses.json"
 MAX_ITEMS = 12
 
 
@@ -91,7 +89,7 @@ def _save_asset_image(arr, out_path: Path) -> str | None:
     if pil is None:
         return None
     pil.save(out_path)
-    return str(out_path.relative_to(BASE_DIR))
+    return str(out_path)
 
 
 def save_recent_analysis(
@@ -155,7 +153,7 @@ def load_recent_analysis_by_id(analysis_id: str) -> dict | None:
 def load_asset_image(relative_path: str):
     if not relative_path:
         return None
-    path = BASE_DIR / relative_path
+    path = Path(relative_path)
     if not path.exists():
         return None
     return np.array(Image.open(path).convert("RGB"))
