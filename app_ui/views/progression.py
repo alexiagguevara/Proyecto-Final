@@ -44,6 +44,27 @@ def _category(score: float, table: list) -> str:
             return label
     return table[-1][2]
 
+def _recovery_color(score: float) -> str:
+    if score < 18.25:
+        return "#E24B4A"   # red
+    elif score < 51.44:
+        return "#D85A30"   # coral
+    elif score < 83.19:
+        return "#BA7517"   # amber
+    else:
+        return "#3B6D11"   # green
+
+
+def _inflammatory_color(score: float) -> str:
+    if score < 16.81:
+        return "#3B6D11"   # green
+    elif score < 48.56:
+        return "#BA7517"   # amber
+    elif score < 81.75:
+        return "#D85A30"   # coral
+    else:
+        return "#E24B4A"   # red
+
 
 class ProgressionView(ctk.CTkFrame):
     def __init__(self, parent, app, **kwargs):
@@ -196,7 +217,7 @@ class ProgressionView(ctk.CTkFrame):
             scrollbar_button_color="#E5E7EB",
             scrollbar_button_hover_color="#D1D5DB",
         )
-        body.pack(fill="both", expand=True, padx=20, pady=14)
+        body.pack(fill="both", expand=True, padx=(20, 8), pady=14)
 
         Banner(body,
                text=(
@@ -205,13 +226,13 @@ class ProgressionView(ctk.CTkFrame):
                ),
                style="info").pack(fill="x", pady=(0, 14))
 
-        info = ctk.CTkFrame(body, fg_color=C["bg2"], corner_radius=8)
+        info = ctk.CTkFrame(body, fg_color=C["bg1"], corner_radius=8)
         info.pack(fill="x", pady=(0, 16))
 
         ctk.CTkLabel(
             info,
             text="SCORE FEATURES",
-            font=(C["mono"], 10, "bold"),
+            font=(C["mono"], 12, "bold"),
             text_color=C["text3"],
         ).pack(anchor="w", padx=14, pady=(10, 6))
 
@@ -248,7 +269,7 @@ class ProgressionView(ctk.CTkFrame):
 
         ctk.CTkLabel(body,
                      text="REFERENCE IMAGES — add as many as you have",
-                     font=(C["mono"], 10, "bold"),
+                     font=(C["mono"], 12, "bold"),
                      text_color=C["text3"]).pack(anchor="w", pady=(0, 8))
 
         # Control refs
@@ -271,7 +292,7 @@ class ProgressionView(ctk.CTkFrame):
 
         ctk.CTkLabel(body,
                      text="IMAGE TO ANALYZE",
-                     font=(C["mono"], 10, "bold"),
+                     font=(C["mono"], 12, "bold"),
                      text_color=C["text3"]).pack(anchor="w", pady=(0, 8))
 
         self._anchored_upload_zone = UploadZone(
@@ -354,7 +375,7 @@ class ProgressionView(ctk.CTkFrame):
             scrollbar_button_color="#E5E7EB",
             scrollbar_button_hover_color="#D1D5DB",
         )
-        body.pack(fill="both", expand=True, padx=20, pady=14)
+        body.pack(fill="both", expand=True, padx=(20, 8), pady=14)
 
         Banner(body,
                text=(
@@ -364,13 +385,13 @@ class ProgressionView(ctk.CTkFrame):
                ),
                style="warning").pack(fill="x", pady=(0, 14))
 
-        info = ctk.CTkFrame(body, fg_color=C["bg2"], corner_radius=8)
+        info = ctk.CTkFrame(body, fg_color=C["bg1"], corner_radius=8)
         info.pack(fill="x", pady=(0, 16))
 
         ctk.CTkLabel(
             info,
             text="SCORE FEATURES",
-            font=(C["mono"], 10, "bold"),
+            font=(C["mono"], 12, "bold"),
             text_color=C["text3"],
         ).pack(anchor="w", padx=14, pady=(10, 6))
 
@@ -407,8 +428,8 @@ class ProgressionView(ctk.CTkFrame):
 
         self._free_upload_zone = UploadZone(
             body,
-            label="Drop .tif image here",
-            icon_color=C["warning_fg"],
+            label="Select .tif image",
+            icon_color=C["success_fg"],
             on_file=self._on_select_free_target,
             on_clear=self._on_clear_free_target,
         )
@@ -418,9 +439,9 @@ class ProgressionView(ctk.CTkFrame):
             body,
             text="Analyze image →",
             command=self._on_free_analyze_click,
-            fg_color=C["warning_bg"],
-            text_color=C["warning_fg"],
-            hover_color=C["bg3"],
+            fg_color=C["success_bg"],
+            text_color=C["success_fg"],
+            hover_color=C["green_light"],
             font=(C["sans"], 14, "bold"),
             height=44,
             state="disabled",
@@ -473,7 +494,7 @@ class ProgressionView(ctk.CTkFrame):
             scrollbar_button_color="#E5E7EB",
             scrollbar_button_hover_color="#D1D5DB",
         )
-        body_holder.pack(fill="both", expand=True, padx=20, pady=16)
+        body_holder.pack(fill="both", expand=True, padx=(20, 8), pady=16)
 
         if mode == "anchored":
             self._anchored_result_body = body_holder
@@ -496,15 +517,17 @@ class ProgressionView(ctk.CTkFrame):
         category = _category(recovery, RECOVERY_CATEGORIES)
 
         ctk.CTkLabel(inner, text="RECOVERY SCORE",
-                     font=(C["mono"], 10, "bold"),
+                     font=(C["mono"], 12, "bold"),
                      text_color=C["text3"]).pack(anchor="w", pady=(0, 8))
 
         bar = ScoreBar(inner, score=recovery, mode="recovery", bg=C["bg1"])
         bar.pack(fill="x", pady=(0, 4))
 
+        score_color = _recovery_color(recovery)
+
         ctk.CTkLabel(inner, text=f"{recovery:.1f}",
                      font=(C["sans"], 34, "bold"),
-                     text_color=C["seg_green"]).pack(anchor="w")
+                     text_color=score_color).pack(anchor="w")
         ctk.CTkLabel(inner, text=category,
                      font=(C["sans"], 13),
                      text_color=C["text2"]).pack(anchor="w", pady=(0, 4))
@@ -524,7 +547,7 @@ class ProgressionView(ctk.CTkFrame):
             note_lbl = ctk.CTkLabel(
                 inner,
                 text=r.note,
-                font=(C["mono"], 10),
+                font=(C["mono"], 11),
                 text_color=C["text3"],
                 justify="left",
                 anchor="w",
@@ -544,19 +567,19 @@ class ProgressionView(ctk.CTkFrame):
         cards = ctk.CTkFrame(inner, fg_color="transparent")
         cards.pack(fill="x", pady=(0, 14))
         cards.columnconfigure((0, 1), weight=1)
-        FeatureCard(cards, "recovery score",      f"{r.recovery_score:.1f}").grid(
+        FeatureCard(cards, "Recovery score",      f"{r.recovery_score:.1f}").grid(
             row=0, column=0, padx=(0, 4), sticky="nsew")
-        FeatureCard(cards, "inflammatory score",  f"{r.inflammatory_score:.1f}").grid(
+        FeatureCard(cards, "Inflammatory score",  f"{r.inflammatory_score:.1f}").grid(
             row=0, column=1, padx=(4, 0), sticky="nsew")
 
         feat_cards = ctk.CTkFrame(inner, fg_color="transparent")
         feat_cards.pack(fill="x", pady=(0, 14))
         feat_cards.columnconfigure((0, 1), weight=1)
 
-        FeatureCard(feat_cards, "med. thickness", f"{r.median_thickness:.2f}").grid(
+        FeatureCard(feat_cards, "Med. thickness", f"{r.median_thickness:.2f}").grid(
             row=0, column=0, padx=(0, 4), sticky="nsew"
         )
-        FeatureCard(feat_cards, "med. seg. length", f"{r.median_segment_length:.2f}").grid(
+        FeatureCard(feat_cards, "Med. seg. length", f"{r.median_segment_length:.2f}").grid(
             row=0, column=1, padx=(4, 0), sticky="nsew"
         )
         
@@ -599,15 +622,17 @@ class ProgressionView(ctk.CTkFrame):
         category = _category(inflam, INFLAM_CATEGORIES)
 
         ctk.CTkLabel(inner, text="INFLAMMATORY SCORE",
-                     font=(C["mono"], 10, "bold"),
+                     font=(C["mono"], 12, "bold"),
                      text_color=C["text3"]).pack(anchor="w", pady=(0, 8))
 
         bar = ScoreBar(inner, score=inflam, mode="inflammatory", bg=C["bg1"])
         bar.pack(fill="x", pady=(0, 4))
 
+        score_color = _inflammatory_color(inflam)
+
         ctk.CTkLabel(inner, text=f"{inflam:.1f}",
                      font=(C["sans"], 34, "bold"),
-                     text_color=C["seg_red"]).pack(anchor="w")
+                     text_color=score_color).pack(anchor="w")
         ctk.CTkLabel(inner, text=category,
                      font=(C["sans"], 13),
                      text_color=C["text2"]).pack(anchor="w", pady=(0, 4))
@@ -626,10 +651,10 @@ class ProgressionView(ctk.CTkFrame):
         cards = ctk.CTkFrame(inner, fg_color="transparent")
         cards.pack(fill="x", pady=(0, 14))
         cards.columnconfigure((0, 1), weight=1)
-        FeatureCard(cards, "med. thickness",
+        FeatureCard(cards, "Med. thickness",
                     f"{r.median_thickness:.2f}").grid(
             row=0, column=0, padx=(0, 4), sticky="nsew")
-        FeatureCard(cards, "med. seg. length",
+        FeatureCard(cards, "Med. seg. length",
                     f"{r.median_segment_length:.2f}").grid(
             row=0, column=1, padx=(4, 0), sticky="nsew")
 

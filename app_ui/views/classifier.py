@@ -78,7 +78,7 @@ class ClassifierView(ctk.CTkFrame):
             text=(
                 "Upload a single epifluorescence image.\n"
                 "The model classifies astrocyte morphology as control or "
-                "pro-inflammatory based on three selectedmorphological features"
+                "pro-inflammatory based on three selected morphological features "
                 "extracted from the GFAP network."
             ),
             font=(C["sans"], 13),
@@ -98,12 +98,12 @@ class ClassifierView(ctk.CTkFrame):
 
 
         # Model features reference
-        info = ctk.CTkFrame(body, fg_color=C["bg2"],
+        info = ctk.CTkFrame(body, fg_color=C["bg1"],
                             corner_radius=8)
         info.pack(fill="x", pady=(0, 16))
 
         ctk.CTkLabel(info, text="MODEL FEATURES",
-                     font=(C["mono"], 10, "bold"),
+                     font=(C["mono"], 12, "bold"),
                      text_color=C["text3"]).pack(
             anchor="w", padx=14, pady=(10, 6))
 
@@ -182,7 +182,7 @@ class ClassifierView(ctk.CTkFrame):
 
         # Predicted state
         ctk.CTkLabel(body, text="PREDICTED STATE",
-                     font=(C["mono"], 10, "bold"),
+                     font=(C["mono"], 12, "bold"),
                      text_color=C["text3"]).pack(anchor="w", pady=(0, 4))
         ctk.CTkLabel(body, text=r.prediction,
                      font=(C["sans"], 26, "bold"),
@@ -218,9 +218,9 @@ class ClassifierView(ctk.CTkFrame):
         grid.pack(fill="x", pady=(0, 14))
         grid.columnconfigure((0, 1, 2), weight=1)
         for col, (lbl, val) in enumerate([
-            ("med. thickness",      f"{r.median_thickness:.2f}"),
-            ("med. tortuosity",     f"{r.median_tortuosity:.3f}"),
-            ("med. seg. length",    f"{r.median_segment_length:.2f}"),
+            ("Med. thickness",      f"{r.median_thickness:.2f}"),
+            ("Med. tortuosity",     f"{r.median_tortuosity:.3f}"),
+            ("Med. seg. length",    f"{r.median_segment_length:.2f}"),
         ]):
             FeatureCard(grid, lbl, val).grid(row=0, column=col,
                                              padx=4, sticky="nsew")

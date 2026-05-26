@@ -27,6 +27,7 @@ import numpy as np
 from typing import Callable, Optional
 from pathlib import Path
 from datetime import datetime
+from paths import resource_path
 
 
 # ── Colour palette ────────────────────────────────────────────────────────────
@@ -42,12 +43,12 @@ C: dict[str, str] = {
     "seg_coral":    "#D85A30",
     "seg_red":      "#E24B4A",
     # semantic backgrounds
-    "success_bg":   "#F0FDF4",
+    "success_bg":   "#E7F8EC",
     "success_fg":   "#166534",
     "danger_bg":    "#FEF2F2",
     "danger_fg":    "#991B1B",
-    "warning_bg":   "#FFFBEB",
-    "warning_fg":   "#92400E",
+    "warning_bg":   "#F6EEDB",
+    "warning_fg":   "#A64B12",
     "info_bg":      "#EFF6FF",
     "info_fg":      "#1E40AF",
     # neutrals
@@ -56,9 +57,9 @@ C: dict[str, str] = {
     "text3":        "#9CA3AF",
     "border":       "#E5E7EB",
     "border_dark":  "#D1D5DB",
-    "bg1":          "#FFFFFF",
-    "bg2":          "#F9FAFB",
-    "bg3":          "#F3F4F6",
+    "bg1":          "#F7FBF6",
+    "bg2":          "#EDF5EA", #"#F9FAFB"
+    "bg3":          "#E3ECE0",
     # fonts
     "mono":         "Courier New",
     "sans":         "Helvetica",
@@ -93,42 +94,34 @@ class Topbar(ctk.CTkFrame):
         super().__init__(parent, fg_color=C["bg1"], corner_radius=0, **kwargs)
 
         # ── Top row ──────────────────────────────────────────────────────────
-        row = ctk.CTkFrame(self, fg_color="transparent", height=52)
+        row = ctk.CTkFrame(self, fg_color="transparent", height=64)
         row.pack(fill="x", padx=16, pady=(0, 0))
         row.pack_propagate(False)
 
         # Logo mark
-        lm = ctk.CTkFrame(
-            row,
-            fg_color=C["success_bg"],
-            corner_radius=6,
-            width=28,
-            height=28
+        logo_path = resource_path("app_ui/assets/AstroMetrix_lockup.png")
+        logo_img = Image.open(logo_path).convert("RGBA")
+        logo_img = logo_img.resize((145, 50), Image.Resampling.LANCZOS) # adjust size
+
+        self._topbar_logo = ctk.CTkImage(
+            light_image=logo_img,
+            dark_image=logo_img,
+            size=(145, 50)   # adjust size
         )
-        lm.pack(side="left", padx=(0, 6), pady=12)
-        lm.pack_propagate(False)
-
-        ctk.CTkLabel(
-            lm,
-            text="✦",
-            font=(C["sans"], 12),
-            text_color=C["green_mid"]
-        ).place(relx=.5, rely=.5, anchor="center")
 
         ctk.CTkLabel(
             row,
-            text="AstroMetrix",
-            font=(C["sans"], 15, "bold"),
-            text_color=C["text1"]
-        ).pack(side="left")
+            text="",
+            image=self._topbar_logo
+        ).pack(side="left", padx=(0, 10), pady=7)
 
         if breadcrumb:
             ctk.CTkLabel(
                 row,
-                text=f"  /  {breadcrumb}",
-                font=(C["mono"], 11),
+                text=f" /  {breadcrumb}",
+                font=(C["mono"], 12),
                 text_color=C["text3"]
-            ).pack(side="left")
+            ).pack(side="left", padx=(6,0))
 
         if back_label and back_cmd:
             ctk.CTkButton(
@@ -149,7 +142,7 @@ class Topbar(ctk.CTkFrame):
             self,
             height=1,
             fg_color=C["border"]
-        ).pack(fill="x", padx=16, pady=(0, 0))
+        ).pack(fill="x", padx=16, pady=(0,0))
 
 
 # ── Mode card ─────────────────────────────────────────────────────────────────
@@ -193,7 +186,7 @@ class UploadZone(ctk.CTkFrame):
     """
 
     def __init__(self, parent,
-                 label: str = "Drop .tif image here",
+                 label: str = "Select .tif image",
                  icon_color: str = None,
                  on_file: Callable[[str], None] = None,
                  on_clear: Callable[[], None] = None,
@@ -302,7 +295,7 @@ class UploadZone(ctk.CTkFrame):
             command=self.clear,
             fg_color=C["danger_bg"],
             text_color=C["danger_fg"],
-            hover_color=C["bg3"],
+            hover_color="#F3D6D6",
             height=28,
             width=80,
             font=(C["sans"], 11),
@@ -369,9 +362,11 @@ class RefUploadZone(ctk.CTkFrame):
             self,
             text="Browse .tif files",
             command=self._browse,
-            fg_color=C["success_bg"],
+            fg_color="#ECF7EF",
             text_color=C["success_fg"],
-            hover_color=C["bg3"],
+            hover_color="#DFF0E4",
+            border_width=1,
+            border_color="#C9DECF",
             font=(C["sans"], 12),
             height=28,
             cursor=CLICK_CURSOR,
@@ -438,7 +433,7 @@ class RefUploadZone(ctk.CTkFrame):
                 command=lambda path=p: self.remove_path(path),
                 fg_color=C["danger_bg"],
                 text_color=C["danger_fg"],
-                hover_color=C["bg3"],
+                hover_color="#F3D6D6",
                 height=24,
                 width=70,
                 font=(C["sans"], 11),
@@ -579,7 +574,7 @@ class FeatureCard(ctk.CTkFrame):
 
     def __init__(self, parent, label: str, value: str, **kwargs):
         super().__init__(parent, fg_color=C["bg2"], corner_radius=8, **kwargs)
-        ctk.CTkLabel(self, text=label, font=(C["mono"], 9),
+        ctk.CTkLabel(self, text=label, font=(C["mono"], 12),
                      text_color=C["text3"], anchor="w").pack(
             anchor="w", padx=10, pady=(8, 0))
         ctk.CTkLabel(self, text=value, font=(C["sans"], 17, "bold"),
@@ -917,7 +912,7 @@ class ExpandableImageCard(ctk.CTkFrame):
             command=viewer.destroy,
             fg_color=C["danger_bg"],
             text_color=C["danger_fg"],
-            hover_color=C["bg3"],
+            hover_color="#F3D6D6",
             cursor=CLICK_CURSOR,
         ).pack(side="right")
 
@@ -1076,7 +1071,7 @@ class RecentAnalysisItem(ctk.CTkFrame):
             width=42,
             height=42
         )
-        icon_box.pack(side="left", padx=(0, 14))
+        icon_box.pack(side="left", padx=(7, 14))
         icon_box.pack_propagate(False)
 
         ctk.CTkLabel(
@@ -1120,7 +1115,7 @@ class RecentAnalysisItem(ctk.CTkFrame):
             pady=8,
             cursor=CLICK_CURSOR,
         )
-        badge.pack(side="right")
+        badge.pack(side="right", padx=(14, 7))
 
         divider = ctk.CTkFrame(
             self,

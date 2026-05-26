@@ -71,7 +71,7 @@ class HomeView(ctk.CTkFrame):
 
         ctk.CTkLabel(
             hero,
-            text="Quantify GFAP filament network changes\nfrom epifluorescence microscopy images",
+            text="Quantify GFAP filament network changes\nfrom green epifluorescence microscopy images",
             font=(C["sans"], 13),
             text_color=C["text2"],
             justify="center",
@@ -118,9 +118,9 @@ class HomeView(ctk.CTkFrame):
             recent_header,
             text="Clear history",
             command=self._clear_recent_history,
-            fg_color=C["bg2"],
+            fg_color=C["danger_bg"],
             text_color=C["danger_fg"],
-            hover_color=C["bg3"],
+            hover_color="#F3D6D6",
             border_width=1,
             border_color=C["danger_bg"],
             font=(C["sans"], 11, "bold"),
