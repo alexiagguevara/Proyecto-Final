@@ -22,6 +22,7 @@ import csv
 import tkinter as tk
 import customtkinter as ctk
 from tkinter import filedialog
+import tkinter.font as tkfont
 from PIL import Image, ImageTk, ImageDraw
 import numpy as np
 from typing import Callable, Optional
@@ -71,13 +72,22 @@ def make_responsive_wrap(label, parent, padding=40, min_wrap=220):
     """
     def _update_wrap(_event=None):
         try:
-            width = max(min_wrap, parent.winfo_width() - padding)
-            label.configure(wraplength=width)
+            parent.update_idletasks()
+            width = parent.winfo_width()
+
+            if width <= 1:
+                return
+
+            wrap = max(min_wrap, width - padding)
+
+            # important in Windows:
+            label.configure(wraplength=wrap)
         except Exception:
             pass
 
     parent.bind("<Configure>", _update_wrap, add="+")
-    _update_wrap()
+    label.after(100, _update_wrap)
+    label.after(300, _update_wrap)
 
 CLICK_CURSOR = "pointinghand" if sys.platform == "darwin" else "hand2"
 
@@ -667,7 +677,7 @@ class FeatureTable(CollapsibleSection):
             fg_color="transparent",
             text_color=C["text2"],
             hover_color=C["bg3"],
-            font=(C["sans"], 14, "bold"),
+            font=(C["sans"], 16),
             width=28,
             height=26,
             cursor=CLICK_CURSOR,
@@ -982,6 +992,54 @@ class Banner(ctk.CTkFrame):
                      anchor="w",)
         self._label.pack(fill="x", padx=14, pady=10)
         make_responsive_wrap(self._label, self, padding=24, min_wrap=220)
+
+class WrappedBanner(ctk.CTkFrame):
+    def __init__(self, parent, text: str, style: str = "info", **kwargs):
+        palette = {
+            "info": {
+                "bg": C["info_bg"],
+                "fg": C["info_fg"],
+            },
+            "warning": {
+                "bg": C["warning_bg"],
+                "fg": C["warning_fg"],
+            },
+            "success": {
+                "bg": C["success_bg"],
+                "fg": C["success_fg"],
+            },
+            "danger": {
+                "bg": C["danger_bg"],
+                "fg": C["danger_fg"],
+            },
+        }
+        colors = palette.get(style, palette["info"])
+
+        super().__init__(
+            parent,
+            fg_color=colors["bg"],
+            corner_radius=8,
+            height=53,
+            **kwargs
+        )
+        self.pack_propagate(False)
+
+        self._text_box = ctk.CTkTextbox(
+            self,
+            fg_color="transparent",
+            border_width=0,
+            corner_radius=0,
+            activate_scrollbars=False,
+            font=(C["sans"], 12),
+            text_color=colors["fg"],
+            wrap="word",
+        )
+        self._text_box.pack(fill="both", expand=True, padx=14, pady=(8, 8))
+        self._text_box.insert("1.0", text)
+        self._text_box.configure(state="disabled", cursor="arrow")
+        self._text_box._textbox.configure(cursor="arrow")
+        self._text_box._textbox.bind("<Button-1>", lambda e: "break")
+        self._text_box._textbox.bind("<B1-Motion>", lambda e: "break")
 
 # ── Recent analyses ────────────────────────────────────────────────────────────────────
 

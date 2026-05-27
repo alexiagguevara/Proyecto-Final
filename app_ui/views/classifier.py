@@ -71,26 +71,35 @@ class ClassifierView(ctk.CTkFrame):
             scrollbar_button_color="#E5E7EB",
             scrollbar_button_hover_color="#D1D5DB",
         )
-        body.pack(fill="both", expand=True, padx=20, pady=16)
+        body.pack(fill="both", expand=True, padx=(20, 8), pady=16)
 
-        desc_lbl = ctk.CTkLabel(
-            body,
-            text=(
-                "Upload a single epifluorescence image.\n"
-                "The model classifies astrocyte morphology as control or "
-                "pro-inflammatory based on three selected morphological features "
-                "extracted from the GFAP network."
-            ),
+        content = ctk.CTkFrame(body, fg_color="transparent")
+        content.pack(fill="both", expand=True, padx=(0, 18))
+
+        desc_box = ctk.CTkTextbox(
+            content,
+            fg_color="transparent",
+            border_width=0,
+            corner_radius=0,
+            activate_scrollbars=False,
             font=(C["sans"], 13),
             text_color=C["text2"],
-            justify="left",
-            anchor="w",
+            wrap="word",
+            height=58,
         )
-        desc_lbl.pack(fill="x", anchor="w", pady=(0, 16))
-        make_responsive_wrap(desc_lbl, body, padding=40, min_wrap=260)
+        desc_box.pack(fill="x", anchor="w", pady=(0, 16))
+        desc_box.insert(
+            "1.0",
+            "Upload a single epifluorescence image.\n"
+            "The model classifies astrocyte morphology as control or "
+            "pro-inflammatory based on three selected morphological features "
+            "extracted from the GFAP network."
+        )
+        desc_box.configure(state="disabled", cursor="arrow")
+        desc_box.configure(cursor="arrow")
 
         self._upload_zone = UploadZone(
-            body,
+            content,
             on_file=self._on_select_file,
             on_clear=self._on_clear_selected_file,
         )
@@ -98,7 +107,7 @@ class ClassifierView(ctk.CTkFrame):
 
 
         # Model features reference
-        info = ctk.CTkFrame(body, fg_color=C["bg1"],
+        info = ctk.CTkFrame(content, fg_color=C["bg1"],
                             corner_radius=8)
         info.pack(fill="x", pady=(0, 16))
 
@@ -125,7 +134,7 @@ class ClassifierView(ctk.CTkFrame):
         ctk.CTkFrame(info, height=10, fg_color="transparent").pack()
 
         self._analyze_btn = ctk.CTkButton(
-            body, text="Analyze image →",
+            content, text="Analyze image →",
             command=self._on_analyze_click,
             fg_color=C["success_bg"],
             text_color=C["success_fg"],
@@ -135,7 +144,7 @@ class ClassifierView(ctk.CTkFrame):
             state="disabled",
         )
         self._analyze_btn.pack(fill="x", pady=(0, 10))
-        self._loading_host = ctk.CTkFrame(body, fg_color="transparent")
+        self._loading_host = ctk.CTkFrame(content, fg_color="transparent")
         self._loading_host.pack(fill="x")
 
         return panel

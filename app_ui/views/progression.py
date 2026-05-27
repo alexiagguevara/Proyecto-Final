@@ -11,7 +11,7 @@ import threading
 import customtkinter as ctk
 from widgets import (
     C, Topbar, UploadZone, RefUploadZone, ScoreBar,
-    FeatureCard, ProcessingOutputs, FeatureTable, Banner, CollapsibleSection, make_responsive_wrap,
+    FeatureCard, ProcessingOutputs, FeatureTable, Banner, WrappedBanner, CollapsibleSection, make_responsive_wrap,
 )
 from core.pipeline import (
     ProgressionResult,
@@ -219,7 +219,7 @@ class ProgressionView(ctk.CTkFrame):
         )
         body.pack(fill="both", expand=True, padx=(20, 8), pady=14)
 
-        Banner(body,
+        WrappedBanner(body,
                text=(
                    "Provide control and inflamed reference images from the same experiment. "
                    "This mode computes a recovery-oriented score anchored to your own references, reducing between-experiment variability."
@@ -377,7 +377,7 @@ class ProgressionView(ctk.CTkFrame):
         )
         body.pack(fill="both", expand=True, padx=(20, 8), pady=14)
 
-        Banner(body,
+        WrappedBanner(body,
                text=(
                    "No experiment references needed. Score is calculated against "
                    "population-level anchors from the training dataset. "
@@ -614,7 +614,7 @@ class ProgressionView(ctk.CTkFrame):
             "Consider using Experiment-Anchored mode when references are available."
         )
 
-        Banner(inner,
+        WrappedBanner(inner,
                text=banner_text,
                style="warning").pack(fill="x", pady=(0, 14))
 
