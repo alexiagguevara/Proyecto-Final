@@ -30,7 +30,7 @@ GROUP_COL = "group"          # N1, N2, N3, N4
 CTRL_LABEL = "CTRL"
 HPMC_LABEL = "HPMC"
 CORR_THRESHOLD = 0.85       # drop one feature from pairs above this |r|
-N_SPLITS = 4                 # 4 cultivos → leave-one-culture-out style
+DEFAULT_N_SPLITS = 4                 # 4 cultivos → leave-one-culture-out style
 RANDOM_STATE = 42
 
 
@@ -143,7 +143,7 @@ def run_rfecv(df,
               group_col=GROUP_COL,
               ctrl_label=CTRL_LABEL,
               hpmc_label=HPMC_LABEL,
-              n_splits=N_SPLITS):
+              n_splits=DEFAULT_N_SPLITS):
     """
     Selección recursiva de features usando:
     - GroupKFold por cultivo
@@ -224,7 +224,7 @@ def compare_models(df,
                    group_col=GROUP_COL,
                    ctrl_label=CTRL_LABEL,
                    hpmc_label=HPMC_LABEL,
-                   n_splits=N_SPLITS):
+                   n_splits=None):
     """
     Compara modelos con validación por cultivo (GroupKFold).
     """
@@ -233,6 +233,9 @@ def compare_models(df,
     y_raw = df.loc[mask, condition_col].values
     y = (y_raw == hpmc_label).astype(int)
     groups = df.loc[mask, group_col].values
+
+    if n_splits is None:
+        n_splits=len(np.unique(groups))
 
     cv = GroupKFold(n_splits=n_splits)
 
@@ -276,83 +279,108 @@ def compare_models(df,
                 "Feature Set": feat_label,
                 "Model": model_name,
                 "n_features": len(feats),
+                "features": feats.copy(),
                 "ROC-AUC": f"{cv_res['test_roc_auc'].mean():.3f} ± {cv_res['test_roc_auc'].std():.3f}",
                 "F1": f"{cv_res['test_f1'].mean():.3f} ± {cv_res['test_f1'].std():.3f}",
                 "Accuracy": f"{cv_res['test_accuracy'].mean():.3f} ± {cv_res['test_accuracy'].std():.3f}",
-                "_auc_mean": cv_res["test_roc_auc"].mean()
+                "_auc_mean": cv_res["test_roc_auc"].mean(),
+                "_f1_mean": cv_res['test_f1'].mean(),
+                "_acc_mean": cv_res['test_accuracy'].mean()
             })
 
     comparison_df = (
         pd.DataFrame(rows)
-        .sort_values("_auc_mean", ascending=False)
-        .drop(columns="_auc_mean")
+        .sort_values(["_auc_mean", "_f1_mean", "_acc_mean"], ascending=False)
+        .reset_index(drop=True)
     )
 
-    print("[Step 4] Model comparison results:")
-    print(comparison_df.to_string(index=False))
+    print("Model comparison results:")
+    print(comparison_df.drop(columns=["_auc_mean", "_f1_mean", "_acc_mean"]).to_string(index=False))
     print()
 
     return comparison_df
 
 
 # =============================================================================
-# STEP 5 — FINAL MODEL INTERPRETATION (EXPLORATORY)
+# STEP 5 — INNER LOOP
 # =============================================================================
+from src.features import rank_features, print_report
 
-def evaluate_final_model(df,
-                         final_features,
-                         condition_col=CONDITION_COL,
-                         ctrl_label=CTRL_LABEL,
-                         hpmc_label=HPMC_LABEL):
+def run_inner_loop_no_rfecv(df_outer_train,
+                            condition_col=CONDITION_COL,
+                            group_col=GROUP_COL,
+                            ctrl_label=CTRL_LABEL,
+                            hpmc_label=HPMC_LABEL,
+                            corr_threshold=CORR_THRESHOLD):
     """
-    Exploratory only:
-    entrena sobre todo el dataset y muestra importancia de variables.
-    No es validación final.
+    Inner loop:
+    1) rank_features sobre outer-train
+    2) strong candidates
+    3) correlation pruning
+    4) compare_models sobre el set prunned
+    5) elegir mejor modelo
     """
-    mask = df[condition_col].isin([ctrl_label, hpmc_label])
 
-    X = df.loc[mask, final_features].values
-    y_raw = df.loc[mask, condition_col].values
-    y = (y_raw == hpmc_label).astype(int)
-
-    rf = RandomForestClassifier(
-        n_estimators=500,
-        class_weight="balanced",
-        random_state=RANDOM_STATE,
-        n_jobs=-1
+    # Stage 1 ranking SOLO con outer-train
+    results_df = rank_features(
+        df_outer_train,
+        condition_col=condition_col,
+        ctrl_label=ctrl_label,
+        hpmc_label=hpmc_label
     )
-    rf.fit(X, y)
+    print_report(results_df, top_n=15)
+    print()
 
-    perm = permutation_importance(
-        rf, X, y,
-        n_repeats=30,
-        random_state=RANDOM_STATE,
-        n_jobs=-1
+    # Strong candidates
+    strong = get_strong_candidates(results_df, df=df_outer_train)
+    if len(strong) == 0:
+        raise ValueError("No HIGH-tier features found in this outer fold.")
+
+    # Correlation pruning
+    pruned, corr_pairs = prune_correlated_features(
+        df_outer_train,
+        strong,
+        results_df,
+        threshold=corr_threshold
+    )
+    if len(pruned) == 0:
+        raise ValueError("Correlation pruning removed all features in this outer fold.")
+
+    # Feature set para comparar modelos
+    feature_sets = {
+        f"{len(pruned)} after corr-pruning": pruned
+    }
+
+    comparison = compare_models(
+        df_outer_train,
+        feature_sets,
+        condition_col=condition_col,
+        group_col=group_col,
+        ctrl_label=ctrl_label,
+        hpmc_label=hpmc_label,
+        n_splits=len(df_outer_train[group_col].unique())
     )
 
-    perm_df = pd.DataFrame({
-        "feature": final_features,
-        "importance": perm.importances_mean,
-        "std": perm.importances_std
-    }).sort_values("importance", ascending=True)
+    # Elegir mejor combinación por ROC-AUC, luego F1, luego Accuracy
+    best_row = comparison.iloc[0]
+    selected_model_name = best_row["Model"]
+    selected_features = best_row["features"].copy()
 
-    fig, ax = plt.subplots(figsize=(8, max(4, len(final_features) * 0.45)))
-    ax.barh(perm_df["feature"], perm_df["importance"],
-            xerr=perm_df["std"], color="#2563EB", alpha=0.8, capsize=4)
-    ax.set_xlabel("Mean decrease in score", fontsize=11)
-    ax.set_title("Permutation Importance — Final Model (Exploratory)",
-                 fontsize=13, fontweight="bold")
-    ax.axvline(0, color="black", linewidth=0.8)
-    ax.grid(True, axis="x", alpha=0.3)
-    plt.tight_layout()
-    plt.savefig("permutation_importance.png", dpi=150, bbox_inches="tight")
-    plt.show()
-    print("[Step 5] Permutation importance saved → permutation_importance.png")
+    return {
+        "results_df": results_df,
+        "strong_candidates": strong,
+        "after_corr_pruning": pruned,
+        "corr_pairs": corr_pairs,
+        "comparison_df": comparison,
+        "selected_model_name": selected_model_name,
+        "selected_features": selected_features,
+    }
+
 
 # =============================================================================
-# MAIN ORCHESTRATOR
+# MAIN ORCHESTRATOR OLD
 # =============================================================================
-
+"""
 def run_full_pipeline(df,
                       results_df,
                       condition_col=CONDITION_COL,
@@ -360,6 +388,7 @@ def run_full_pipeline(df,
                       ctrl_label=CTRL_LABEL,
                       hpmc_label=HPMC_LABEL):
     """
+"""
     Stage 2 completo:
     1) strong candidates
     2) correlation pruning
@@ -367,6 +396,7 @@ def run_full_pipeline(df,
     4) comparación de modelos
     5) interpretación exploratoria del modelo final
     """
+"""
     print("=" * 70)
     print("  STAGE 2 — FEATURE SELECTION PIPELINE")
     print("=" * 70 + "\n")
@@ -427,3 +457,4 @@ def run_full_pipeline(df,
         "rfecv_object": rfecv_obj,
         "model_comparison": comparison,
     }
+"""

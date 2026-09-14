@@ -8,12 +8,15 @@ from sklearn.linear_model import LogisticRegression
 from src.preprocessing import normalize_dataset, apply_filters, build_wavelet_mask_candidate, get_skeleton, prune_skeleton
 from pipeline import extract_all_features
 
-# Features finales elegidas por RFECV
-FINAL_FEATURES = [
-    "median_thickness",
-    "median_tortuosity",
-    "median_segment_length"
-]
+from src.features import rank_features, print_report
+from feature_selection_pipeline import (
+    get_strong_candidates,
+    prune_correlated_features,
+    CONDITION_COL,
+    CTRL_LABEL,
+    HPMC_LABEL,
+    CORR_THRESHOLD,
+)
 
 
 def prepare_single_image(img, robust=True):
@@ -120,16 +123,70 @@ def build_feature_dataset(dataset,
     df = pd.DataFrame(rows)
     return df
 
+def select_final_features_from_full_dataset(df,
+                                            condition_col=CONDITION_COL,
+                                            ctrl_label=CTRL_LABEL,
+                                            hpmc_label=HPMC_LABEL,
+                                            corr_threshold=CORR_THRESHOLD):
+    """
+    Selecciona el feature set final sobre TODO el dataset original usando:
+    rank_features -> HIGH-tier -> correlation pruning
+    """
+
+    # 1) ranking sobre full dataset
+    results_df = rank_features(
+        df,
+        condition_col=condition_col,
+        ctrl_label=ctrl_label,
+        hpmc_label=hpmc_label
+    )
+    print_report(results_df, top_n=15)
+    print()
+
+    # 2) HIGH-tier
+    strong = get_strong_candidates(results_df, df=df)
+    if len(strong) == 0:
+        raise ValueError("No HIGH-tier features found on full dataset.")
+
+    # 3) correlation pruning
+    pruned, corr_pairs = prune_correlated_features(
+        df,
+        strong,
+        results_df,
+        threshold=corr_threshold
+    )
+    if len(pruned) == 0:
+        raise ValueError("Correlation pruning removed all features on full dataset.")
+
+    return pruned, results_df, corr_pairs
+
 def train_final_binary_model(df,
-                             condition_col="condition",
-                             ctrl_label="CTRL",
-                             hpmc_label="HPMC"):
+                             condition_col=CONDITION_COL,
+                             ctrl_label=CTRL_LABEL,
+                             hpmc_label=HPMC_LABEL,
+                             selected_features=None):
     """
-    Entrena el modelo final binario CTRL vs 72hs_LPS usando las 3 features finales.
+    Entrena el modelo final binario usando:
+    - selected_features, si se pasan explícitamente
+    - o la nueva estrategia final:
+      rank_features -> HIGH-tier -> correlation pruning
     """
+
+    # si no se pasan features, usar la nueva selección final
+    if selected_features is None:
+        selected_features, results_df, corr_pairs = select_final_features_from_full_dataset(
+            df,
+            condition_col=condition_col,
+            ctrl_label=ctrl_label,
+            hpmc_label=hpmc_label
+        )
+    else:
+        results_df = None
+        corr_pairs = None
+
     mask = df[condition_col].isin([ctrl_label, hpmc_label])
 
-    X = df.loc[mask, FINAL_FEATURES].copy()
+    X = df.loc[mask, selected_features].copy()
     y = (df.loc[mask, condition_col] == hpmc_label).astype(int)
 
     model = Pipeline([
@@ -139,43 +196,51 @@ def train_final_binary_model(df,
             solver="lbfgs",
             class_weight="balanced",
             max_iter=1000,
-            random_state=42
+            random_state=RANDOM_STATE
         ))
     ])
 
     model.fit(X, y)
 
     metadata = {
-        "features": FINAL_FEATURES,
+        "features": selected_features,
         "target_mapping": {
             0: ctrl_label,
             1: hpmc_label
         },
         "model_type": "LogisticRegression + StandardScaler",
-        "task": "CTRL vs 72hs_LPS",
+        "task": "CTRL vs Pro-inflammatory",
+        "selection_pipeline": "rank_features -> HIGH-tier -> correlation pruning",
+        "corr_threshold": CORR_THRESHOLD,
         "q": 80,
         "variant": "closing_r3",
         "prune_iters": 5
     }
 
-    return model, metadata
+    return model, metadata, results_df, corr_pairs
 
 
 def save_final_binary_model(df,
                             model_path="final_binary_model.joblib",
-                            metadata_path="final_binary_model_metadata.joblib"):
+                            metadata_path="final_binary_model_metadata.joblib",
+                            selected_features=None):
     """
-    Entrena y guarda el modelo final binario.
+    Entrena y guarda el modelo final binario con la nueva estrategia.
+    Mantiene los mismos nombres de archivo para no cambiar la app.
     """
-    model, metadata = train_final_binary_model(df)
+    model, metadata, results_df, corr_pairs = train_final_binary_model(
+        df,
+        selected_features=selected_features
+    )
 
     joblib.dump(model, model_path)
     joblib.dump(metadata, metadata_path)
 
     print(f"Modelo guardado en: {model_path}")
     print(f"Metadata guardada en: {metadata_path}")
+    print(f"Features finales ({len(metadata['features'])}): {metadata['features']}")
 
-    return model, metadata
+    return model, metadata, results_df, corr_pairs
 
 
 from app_ui.paths import resource_path
@@ -248,15 +313,54 @@ def predict_inflammatory_state(img,
 
     return result
 
-#USE OF MODEL
-"""
-import joblib
-import pandas as pd
-
-model = joblib.load("final_binary_model.joblib")
-metadata = joblib.load("final_binary_model_metadata.joblib")
-features = metadata["features"]
-"""
 
 #Recordar que antes de pasarlo al modelo, en el software la imagen que se sube debe pasar por:
 #canal verde, normalización, wavelet, máscara final, skeleton, pruning, extracción de las 3 features
+
+#OUTER LOOP 
+
+from sklearn.ensemble import RandomForestClassifier
+
+CONDITION_COL = "condition"
+CTRL_LABEL = "CTRL"
+HPMC_LABEL = "HPMC"
+DEFAULT_N_SPLITS = 4                 # 4 cultivos → leave-one-culture-out style
+RANDOM_STATE = 42
+
+def train_selected_model(df_train,
+                         selected_features,
+                         model_name,
+                         condition_col=CONDITION_COL,
+                         ctrl_label=CTRL_LABEL,
+                         hpmc_label=HPMC_LABEL):
+    """
+    Entrena el modelo elegido sobre TODO el outer-train.
+    """
+    mask = df_train[condition_col].isin([ctrl_label, hpmc_label])
+
+    X = df_train.loc[mask, selected_features].copy()
+    y = (df_train.loc[mask, condition_col] == hpmc_label).astype(int)
+
+    if model_name == "LogReg (L2)":
+        model = Pipeline([
+            ("scaler", StandardScaler()),
+            ("clf", LogisticRegression(
+                penalty="l2",
+                solver="lbfgs",
+                class_weight="balanced",
+                max_iter=1000,
+                random_state=RANDOM_STATE
+            ))
+        ])
+    elif model_name == "Random Forest":
+        model = RandomForestClassifier(
+            n_estimators=300,
+            class_weight="balanced",
+            random_state=RANDOM_STATE,
+            n_jobs=-1
+        )
+    else:
+        raise ValueError(f"Unknown model_name: {model_name}")
+
+    model.fit(X, y)
+    return model

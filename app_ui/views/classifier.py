@@ -111,16 +111,24 @@ class ClassifierView(ctk.CTkFrame):
                             corner_radius=8)
         info.pack(fill="x", pady=(0, 16))
 
-        ctk.CTkLabel(info, text="MODEL FEATURES",
+        ctk.CTkLabel(info, text="FEATURES USED BY CLASSIFIER",
                      font=(C["mono"], 12, "bold"),
                      text_color=C["text3"]).pack(
             anchor="w", padx=14, pady=(10, 6))
 
-        for feat, direction in [
+        feature_directions = [
             ("median_thickness",      "↓ decreases with inflammation"),
-            ("median_tortuosity",     "↑ increases with inflammation"),
+            ("median_tortuosity",     "↓ decreases with inflammation"),
             ("median_segment_length", "↑ increases with inflammation"),
-        ]:
+            ("median_component_area", "↓ decreases with inflammation"),
+            ("mean_tortuosity",       "↓ decreases with inflammation"),
+            ("largest_component_ratio","↑ increases with inflammation"),
+            ("max_segment_length",    "↑ increases with inflammation"),
+            ("max_thickness",         "↓ decreases with inflammation"),
+            ("n_components",          "↓ decreases with inflammation"),
+        ]
+
+        for feat, direction in feature_directions:
             row = ctk.CTkFrame(info, fg_color="transparent")
             row.pack(fill="x", padx=14, pady=2)
             ctk.CTkFrame(row, width=7, height=7, corner_radius=4,

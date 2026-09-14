@@ -17,4 +17,4 @@ dist/
 __pycache__/
 *.pyc
 .DS_Store
-app_ui/data/
+app_ui/data/.DS_Store
