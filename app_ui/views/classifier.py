@@ -92,7 +92,7 @@ class ClassifierView(ctk.CTkFrame):
             "1.0",
             "Upload a single epifluorescence image.\n"
             "The model classifies astrocyte morphology as control or "
-            "pro-inflammatory based on three selected morphological features "
+            "pro-inflammatory based on nine selected morphological features "
             "extracted from the GFAP network."
         )
         desc_box.configure(state="disabled", cursor="arrow")
