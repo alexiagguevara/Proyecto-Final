@@ -1,5 +1,7 @@
 """Main application window and navigation controller."""
 import customtkinter as ctk
+import sys
+from paths import resource_path
 
 
 class AstroMetrixApp(ctk.CTk):
@@ -12,6 +14,19 @@ class AstroMetrixApp(ctk.CTk):
         self.geometry(f"{self.WIDTH}x{self.HEIGHT}")
         self.minsize(740, 660)
         self.resizable(True, True)
+
+        # Window / taskbar icon (Windows)
+        if sys.platform.startswith("win"):
+            try:
+                import ctypes
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("com.astrometrix.app")
+            except Exception:
+                pass
+            _ico = resource_path("app_ui", "assets", "AstroMetrix.ico")
+            if _ico.exists():
+                # CustomTkinter sets its own default icon ~200 ms after startup,
+                # so the icon is applied after that delay
+                self.after(250, lambda: self.iconbitmap(str(_ico)))
 
         # ── Scrollable container that hosts all views stacked at (0,0)
         self._container = ctk.CTkFrame(self, fg_color="white", corner_radius=0)
