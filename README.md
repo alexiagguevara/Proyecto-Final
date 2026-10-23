@@ -95,8 +95,14 @@ for Apple silicon (M1 or later); on Intel Macs, run from source.
 
 ### Windows
 
-A prebuilt Windows version is not available yet. Run the app from source or build it
-on a Windows machine (see below).
+1. Download `AstroMetrix-windows.zip` from the [Releases page](https://github.com/alexiagguevara/Proyecto-Final/releases/latest).
+2. Unzip it and open `AstroMetrix.exe`.
+
+The app is not signed, so Windows SmartScreen may show "Windows protected your PC".
+Click **More info** and then **Run anyway**. Some antivirus programs may also flag
+the file; this is a known false positive of executables built with PyInstaller.
+
+Tested on Windows 11 Pro 25H2 (builds 26200.9711 and 26200.8973).
 
 ---
 
