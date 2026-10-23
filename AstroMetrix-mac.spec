@@ -27,20 +27,28 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.datas,
     [],
+    exclude_binaries=True,
     name="AstroMetrix",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     icon="app_ui/assets/AstroMetrix.icns",
 )
 
-app = BUNDLE(
+coll = COLLECT(
     exe,
+    a.binaries,
+    a.datas,
+    strip=False,
+    upx=False,
+    name="AstroMetrix",
+)
+
+app = BUNDLE(
+    coll,
     name="AstroMetrix.app",
     icon="app_ui/assets/AstroMetrix.icns",
     bundle_identifier="com.astrometrix.app",

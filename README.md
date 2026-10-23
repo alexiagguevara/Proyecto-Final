@@ -19,7 +19,7 @@ It provides two main analysis modes:
 
 ### State Classifier
 
-Classifies a single `.tif` image based on three selected morphological features:
+Classifies a single `.tif` image based on nine selected morphological features. The result screen highlights three of them:
 
 * `median_thickness`
 * `median_tortuosity`
@@ -67,9 +67,42 @@ Images acquired from other fluorescence channels, other stains, brightfield moda
 
 ---
 
+## Download and install
+
+No Python or additional dependencies are required.
+
+### macOS
+
+1. Download `AstroMetrix-mac.zip` from the [Releases page](https://github.com/alexiagguevara/Proyecto-Final/releases/latest).
+2. Unzip it and (optionally) move `AstroMetrix.app` to your Applications folder.
+3. Open `AstroMetrix.app`. The first launch can take a few seconds.
+
+The app is not notarized by Apple, so macOS blocks it the first time you open it
+("Apple could not verify AstroMetrix is free of malware"). To allow it:
+
+1. Try to open the app once and close the warning dialog.
+2. Go to **System Settings > Privacy & Security**, scroll down to the Security
+   section and click **Open Anyway** next to AstroMetrix.
+3. Confirm with your password and open the app again.
+
+This is only needed the first time. If macOS reports that the app is "damaged",
+remove the quarantine flag from Terminal (adjust the path):
+
+    xattr -dr com.apple.quarantine ~/Downloads/AstroMetrix.app
+
+Tested on Apple silicon M1, M1 Pro and M5. The prebuilt app is built
+for Apple silicon (M1 or later); on Intel Macs, run from source.
+
+### Windows
+
+A prebuilt Windows version is not available yet. Run the app from source or build it
+on a Windows machine (see below).
+
+---
+
 ## Requirements
 
-* Python 3.11 or 3.12 recommended
+* Python 3.11 or 3.12 recommended (only needed to run from source or to build the app)
 * macOS or Windows
 
 ---
@@ -252,7 +285,7 @@ These are bundled during desktop app packaging and are also required when runnin
 
 Current validated setup:
 
-* macOS desktop app build working
+* macOS desktop app validated
 * Windows source execution working
 * Cross-platform user data storage implemented
 
