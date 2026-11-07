@@ -1,0 +1,4 @@
+prune_iters,n,features,faltan,sobran
+0,9,"branch_density, median_component_area, std_segment_length, largest_component_ratio, median_tortuosity, max_segment_length, median_segment_length, max_thickness, n_components","mean_tortuosity, median_thickness","branch_density, std_segment_length"
+3,9,"branch_density, mean_segment_length, median_component_area, median_tortuosity, mean_tortuosity, largest_component_ratio, max_segment_length, max_thickness, n_components","median_segment_length, median_thickness","branch_density, mean_segment_length"
+5,9,"median_thickness, median_tortuosity, median_segment_length, median_component_area, mean_tortuosity, largest_component_ratio, max_segment_length, max_thickness, n_components",,

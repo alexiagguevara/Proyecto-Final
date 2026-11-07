@@ -1,0 +1,7 @@
+variante,n,features,faltan,sobran
+iter0,9,"branch_density, median_component_area, std_segment_length, largest_component_ratio, median_tortuosity, max_segment_length, median_segment_length, max_thickness, n_components","mean_tortuosity, median_thickness","branch_density, std_segment_length"
+iter5,9,"median_thickness, median_tortuosity, median_segment_length, median_component_area, mean_tortuosity, largest_component_ratio, max_segment_length, max_thickness, n_components",,
+L6,9,"skeleton_length, std_segment_length, median_component_area, largest_component_ratio, median_tortuosity, max_segment_length, max_thickness, mean_tortuosity, n_components","median_segment_length, median_thickness","skeleton_length, std_segment_length"
+L11,9,"skeleton_length, std_segment_length, median_component_area, median_tortuosity, largest_component_ratio, max_segment_length, max_thickness, n_components, mean_tortuosity","median_segment_length, median_thickness","skeleton_length, std_segment_length"
+L16,9,"branch_density, median_component_area, std_segment_length, median_tortuosity, largest_component_ratio, max_segment_length, max_thickness, n_components, endpoint_density","mean_tortuosity, median_segment_length, median_thickness","branch_density, endpoint_density, std_segment_length"
+L6+aisl11,9,"skeleton_length, std_segment_length, median_component_area, mean_tortuosity, median_tortuosity, largest_component_ratio, max_segment_length, max_thickness, n_components","median_segment_length, median_thickness","skeleton_length, std_segment_length"
